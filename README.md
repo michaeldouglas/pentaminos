@@ -1,4 +1,4 @@
-# 🧩 Pentaminós (GUI)
+# Pentaminós (GUI)
 
 Interface gráfica para montar pentominós com Raylib.
 

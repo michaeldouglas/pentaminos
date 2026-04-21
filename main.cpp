@@ -4,6 +4,8 @@
 #include <vector>
 #include <iostream>
 #include <cstdlib>
+#include "AVLTree.h"
+#include "State.h"
 
 using namespace std;
 
@@ -38,6 +40,9 @@ int getPieceIndex(const vector<Piece> &pieces, int id)
     return -1;
 }
 
+// Forward declaration do solver de preenchimento automatico
+static bool autoDfs(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis);
+
 int main(int argc, char **argv)
 {
     int rows = 0, cols = 0;
@@ -54,9 +59,16 @@ int main(int argc, char **argv)
         cin >> cols;
     }
 
-    if ((rows * cols) % 5 != 0)
+    if (rows <= 0 || cols <= 0)
     {
-        cout << "Area deve ser multipla de 5\n";
+        cout << "Dimensoes invalidas: use valores positivos.\n";
+        return 1;
+    }
+    // Validacao forte: sempre usar 12 pecas => tabuleiro com 60 celulas
+    if ((rows * cols) != 60)
+    {
+        cout << "Este jogo usa sempre 12 pecas (60 celulas).\n";
+        cout << "Escolha um dos tamanhos: 6x10, 5x12, 4x15, 3x20.\n";
         return 1;
     }
 
@@ -65,10 +77,39 @@ int main(int argc, char **argv)
     vector<bool> usedPieces(pieces.size(), false);
     vector<PlacedPiece> placed;
 
+    // Opcional: preenche automaticamente se for um tabuleiro 6x10 (12 pentominos)
+    // Passe "--prefill" como terceiro argumento para tentar sempre, independente do tamanho
+    // Prefill control: runtime flag or compile-time default
+    bool doPrefill = false;
+#ifdef PREFILL_DEFAULT
+    doPrefill = true;
+#endif
+    if (argc >= 4 && std::string(argv[3]) == "--prefill")
+        doPrefill = true;
+
+    if (doPrefill)
+    {
+        AVLTree vis;
+        auto piecesCopy = pieces; // manter ordem original
+        bool ok = autoDfs(board, piecesCopy, 0, vis);
+        if (ok)
+        {
+            // Marca todas as pecas usadas com base no grid final
+            auto g = board.getGrid();
+            for (int r = 0; r < (int)g.size(); ++r)
+                for (int c = 0; c < (int)g[r].size(); ++c)
+                    if (g[r][c] > 0 && g[r][c] - 1 < (int)usedPieces.size())
+                        usedPieces[g[r][c] - 1] = true;
+        }
+    }
+
     int screenWidth = UI_WIDTH + MARGIN * 2 + cols * CELL_SIZE;
     int screenHeight = MARGIN * 2 + rows * CELL_SIZE;
 
+    // Permitir redimensionar/maximizar a janela
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "Pentaminos");
+    SetWindowMinSize(screenWidth, screenHeight);
     SetTargetFPS(60);
 
     int selectedPiece = -1;
@@ -77,6 +118,16 @@ int main(int argc, char **argv)
     while (!WindowShouldClose())
     {
         // INPUT
+        // F11: alterna modo fullscreen (opcional)
+        if (IsKeyPressed(KEY_F11))
+            ToggleFullscreen();
+
+        // Atualiza dimensoes se a janela foi redimensionada
+        if (IsWindowResized())
+        {
+            screenWidth = GetScreenWidth();
+            screenHeight = GetScreenHeight();
+        }
         if (IsKeyPressed(KEY_LEFT))
             selectedPiece = -1;
         if (IsKeyPressed(KEY_RIGHT))
@@ -230,11 +281,15 @@ int main(int argc, char **argv)
         DrawText("PENTAMINOS - Interface Grafica",
                  boardStartX, boardStartY + rows * CELL_SIZE + 30, 16, BLACK);
 
-        string info = "Colocadas: " + to_string(placed.size()) + "/12";
+        int usedCount = 0;
+        for (bool u : usedPieces)
+            if (u)
+                usedCount++;
+        string info = "Colocadas: " + to_string(usedCount) + "/12";
         DrawText(info.c_str(), boardStartX, boardStartY + rows * CELL_SIZE + 55, 12, BLACK);
 
         // Mensagem de vitória
-        if (placed.size() == 12)
+        if (usedCount == 12)
         {
             DrawRectangle(0, 0, screenWidth, screenHeight, {0, 0, 0, 180});
             DrawText("PARABENS! VENCEU!",
@@ -249,4 +304,32 @@ int main(int argc, char **argv)
 
     CloseWindow();
     return 0;
+}
+
+// Resolver automaticamente (DFS com poda via AVLTree)
+static bool autoDfs(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis)
+{
+    State st(board.getGrid(), {});
+    if (vis.contains(st))
+        return false;
+    vis.insert(st);
+    if (idx == (int)pieces.size())
+        return true;
+    Piece &p = pieces[idx];
+    for (auto &var : p.variations)
+    {
+        for (int i = 0; i < board.getRows(); i++)
+        {
+            for (int j = 0; j < board.getCols(); j++)
+            {
+                if (board.placePiece(var, i, j, p.id))
+                {
+                    if (autoDfs(board, pieces, idx + 1, vis))
+                        return true;
+                    board.removePiece(var, i, j);
+                }
+            }
+        }
+    }
+    return false;
 }

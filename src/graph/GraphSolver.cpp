@@ -1,11 +1,13 @@
 
+
 #include "GraphSolver.h"
 #include <iostream>
 #include <queue>
 #include <chrono>
+#include <set>
 using namespace std;
 
-static bool dfsUtil(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis, int &states)
+static bool dfsOne(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis, int &states)
 {
     State st(board.getGrid(), {});
     if (vis.contains(st))
@@ -13,9 +15,41 @@ static bool dfsUtil(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis, 
     vis.insert(st);
     states++;
     if (idx == (int)pieces.size())
-    {
-        board.print();
         return true;
+    Piece &p = pieces[idx];
+    for (auto &var : p.variations)
+    {
+        for (int i = 0; i < board.getRows(); i++)
+        {
+            for (int j = 0; j < board.getCols(); j++)
+            {
+                if (board.placePiece(var, i, j, p.id))
+                {
+                    if (dfsOne(board, pieces, idx + 1, vis, states))
+                        return true;
+                    board.removePiece(var, i, j);
+                }
+            }
+        }
+    }
+    return false;
+}
+
+static size_t dfsAll(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis, int &states, bool printSolutions, size_t maxSolutions, size_t &found)
+{
+    if (maxSolutions && found >= maxSolutions)
+        return found;
+    State st(board.getGrid(), {});
+    if (vis.contains(st))
+        return found;
+    vis.insert(st);
+    states++;
+    if (idx == (int)pieces.size())
+    {
+        found++;
+        if (printSolutions)
+            board.print();
+        return found;
     }
     Piece &p = pieces[idx];
     for (auto &var : p.variations)
@@ -26,14 +60,15 @@ static bool dfsUtil(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis, 
             {
                 if (board.placePiece(var, i, j, p.id))
                 {
-                    if (dfsUtil(board, pieces, idx + 1, vis, states))
-                        return true;
+                    dfsAll(board, pieces, idx + 1, vis, states, printSolutions, maxSolutions, found);
                     board.removePiece(var, i, j);
+                    if (maxSolutions && found >= maxSolutions)
+                        return found;
                 }
             }
         }
     }
-    return false;
+    return found;
 }
 
 GraphSolver::GraphSolver(Board b) : board(b)
@@ -41,22 +76,56 @@ GraphSolver::GraphSolver(Board b) : board(b)
     pieces = generatePentominoes();
 }
 
-void GraphSolver::solveDFS()
+bool GraphSolver::isComplete(const std::vector<std::vector<int>> &g) const
 {
-    cout << "DFS com backtracking + AVL\n";
-    int states = 0;
-    if (!dfsUtil(board, pieces, 0, visited, states))
-        cout << "Nenhuma solucao\n";
-    cout << "Estados: " << states << "\n";
+    for (auto &r : g)
+        for (int v : r)
+            if (v == 0)
+                return false;
+    return true;
 }
 
-void GraphSolver::solveBFS()
+bool GraphSolver::solveDFSOne(int &states, long long &ms, State &solution)
 {
-    cout << "BFS (estrutura base)\n";
-    queue<State> q;
-    q.push(State(board.getGrid(), {}));
-    int states = 0;
+    states = 0;
+    visited = AVLTree();
     auto start = chrono::high_resolution_clock::now();
+    Board b = board;
+    bool ok = dfsOne(b, pieces, 0, visited, states);
+    auto end = chrono::high_resolution_clock::now();
+    ms = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    if (ok)
+        solution = State(b.getGrid(), {});
+    return ok;
+}
+
+size_t GraphSolver::solveDFSAll(int &states, long long &ms, size_t maxSolutions, bool printSolutions)
+{
+    states = 0;
+    visited = AVLTree();
+    auto start = chrono::high_resolution_clock::now();
+    Board b = board;
+    size_t found = 0;
+    dfsAll(b, pieces, 0, visited, states, printSolutions, maxSolutions, found);
+    auto end = chrono::high_resolution_clock::now();
+    ms = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    return found;
+}
+
+bool GraphSolver::solveBFS(int &states, long long &ms, State &solution)
+{
+    states = 0;
+    visited = AVLTree();
+    auto start = chrono::high_resolution_clock::now();
+    // derive usedPieces from starting grid
+    set<int> used;
+    for (auto &r : board.getGrid())
+        for (int v : r)
+            if (v > 0)
+                used.insert(v);
+    queue<State> q;
+    q.push(State(board.getGrid(), used));
+
     while (!q.empty())
     {
         State cur = q.front();
@@ -65,20 +134,43 @@ void GraphSolver::solveBFS()
             continue;
         visited.insert(cur);
         states++;
-        bool complete = true;
-        for (auto &r : cur.grid)
-            for (int c : r)
-                if (c == 0)
-                    complete = false;
-        if (complete)
+        if (isComplete(cur.grid))
         {
-            cout << "Solução BFS\n";
-            break;
+            solution = cur;
+            auto end = chrono::high_resolution_clock::now();
+            ms = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+            return true;
+        }
+        // expand neighbors: place any remaining piece anywhere
+        // reconstruct board from grid
+        Board b(cur.grid);
+        for (auto &p : pieces)
+        {
+            if (cur.usedPieces.count(p.id))
+                continue;
+            for (auto &var : p.variations)
+            {
+                for (int i = 0; i < b.getRows(); i++)
+                {
+                    for (int j = 0; j < b.getCols(); j++)
+                    {
+                        if (b.placePiece(var, i, j, p.id))
+                        {
+                            auto ng = b.getGrid();
+                            State ns(ng, cur.usedPieces);
+                            ns.usedPieces.insert(p.id);
+                            if (!visited.contains(ns))
+                                q.push(ns);
+                            b.removePiece(var, i, j);
+                        }
+                    }
+                }
+            }
         }
     }
     auto end = chrono::high_resolution_clock::now();
-    cout << "Estados: " << states << "\n";
-    cout << "Tempo(ms): " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << "\n";
+    ms = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    return false;
 }
 
 void GraphSolver::listPieces()

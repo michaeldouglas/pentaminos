@@ -11,6 +11,7 @@ private:
     vector<vector<int>> grid;
 
 public:
+    Board(const vector<vector<int>> &g);
     Board(int r, int c);
     bool placePiece(const vector<pair<int, int>> &shape, int r, int c, int id);
     void removePiece(const vector<pair<int, int>> &shape, int r, int c);

@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "Board.h"
 #include "Piece.h"
+#include "GraphSolver.h"
 #include <vector>
 #include <iostream>
 #include <cstdlib>
@@ -73,6 +74,39 @@ int main(int argc, char **argv)
     }
 
     cout << "Gerando o jogo..." << endl;
+
+    // Modo Resolver via argumentos: --solve=dfs|bfs [--all]
+    if (argc >= 4)
+    {
+        std::string mode = argv[3];
+        if (mode == "--solve=dfs" || mode == "--solve=bfs")
+        {
+            GraphSolver solver(Board(rows, cols));
+            int states = 0;
+            long long ms = 0;
+            State sol;
+            if (mode == "--solve=dfs")
+            {
+                bool all = (argc >= 5 && std::string(argv[4]) == "--all");
+                if (all)
+                {
+                    size_t count = solver.solveDFSAll(states, ms, 0, false);
+                    std::cout << "DFS(todas): solucoes=" << count << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
+                }
+                else
+                {
+                    bool ok = solver.solveDFSOne(states, ms, sol);
+                    std::cout << "DFS(uma): encontrado=" << (ok ? 1 : 0) << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
+                }
+            }
+            else if (mode == "--solve=bfs")
+            {
+                bool ok = solver.solveBFS(states, ms, sol);
+                std::cout << "BFS: encontrado=" << (ok ? 1 : 0) << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
+            }
+            return 0;
+        }
+    }
 
     Board board(rows, cols);
     vector<Piece> pieces = generatePentominoes();

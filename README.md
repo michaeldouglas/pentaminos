@@ -1,10 +1,12 @@
-# Pentaminós – Solver + GUI (Raylib)
+# Pentaminós
 
 Aplicação para jogar e resolver o quebra-cabeça dos pentominós utilizando grafos, DFS, BFS e AVL.
 
+<img src="image.png" alt="Jogo resolvido">
+
 —
 
-Como compilar (Windows)
+## Como compilar (Windows)
 
 - No PowerShell/Prompt, na pasta do projeto:
   ```bat
@@ -16,7 +18,7 @@ Como compilar (Windows)
 
 —
 
-Como executar
+## Como executar
 
 - Modo interativo (menu):
 
@@ -30,10 +32,10 @@ Como executar
 - Modos Resolver por flags (sem menu):
 
   ```bat
-  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs         # primeira solução (DFS)
-  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs --all  # todas as soluções (DFS)
-  .\build_gui\pentaminos_play.exe 6 10 --solve=bfs         # solução de menor profundidade (BFS)
-  .\build_gui\pentaminos_play.exe 6 10 --compare           # compara DFS×BFS (estados/tempo)
+  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs
+  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs --all
+  .\build_gui\pentaminos_play.exe 6 10 --solve=bfs
+  .\build_gui\pentaminos_play.exe 6 10 --compare
   ```
 
 - Jogar (GUI):
@@ -46,7 +48,7 @@ Como executar
 
 —
 
-Requisitos
+## Requisitos
 
 - Windows 10+ com g++ (MinGW).
 - Raylib (o script tenta automaticamente):
@@ -61,19 +63,94 @@ Requisitos
 
 —
 
-Arquitetura
+## Arquitetura
 
 - `main.cpp`: GUI (Raylib), menu e orquestração.
 - `src/piece`: geração de peças e variações (`Piece.cpp/.h`).
 - `src/board`: tabuleiro e operações (`Board.cpp/.h`).
 - `src/state`: estado de busca (`State.cpp/.h`).
 - `src/avl`: árvore AVL para visitados (`AVLTree.cpp/.h`).
-- `src/graph`: solvers (`GraphSolver.cpp/.h`) com:
-  - DFS (primeira e todas as soluções) e BFS (mínima profundidade), métricas de estados e tempo.
+- `src/graph`: solvers (`GraphSolver.cpp/.h`).
 
 —
 
-Notas
+## Algoritmos de Busca
 
-- A chave de estados na AVL utiliza o `grid`. Como os IDs das peças ficam no `grid`, `usedPieces` é redundante para detectar repetição de estado.
-- “Todas as soluções” pode ser muito custoso; use com cautela ou em tabuleiros menores (K mais baixo).
+### DFS (Busca em Profundidade)
+
+A busca em profundidade foi implementada utilizando **backtracking recursivo**.
+
+Funcionamento:
+
+- Seleciona uma peça disponível
+- Itera sobre todas as variações (rotações e reflexões)
+- Tenta posicionar no tabuleiro
+- Avança recursivamente para a próxima peça
+- Em caso de falha, desfaz a jogada
+
+Características:
+
+- Encontra rapidamente uma solução válida
+- Pode encontrar todas as soluções
+- Uso eficiente de memória
+
+---
+
+### BFS (Busca em Largura)
+
+Implementada com uma fila (queue), explorando o espaço de estados por níveis.
+
+Funcionamento:
+
+- Começa com o estado inicial (tabuleiro vazio)
+- Expande estados possíveis nível por nível
+- Cada estado representa uma configuração parcial
+
+Características:
+
+- Garante solução com menor profundidade
+- Consome mais memória que DFS
+
+---
+
+## Estrutura AVL
+
+Utilizada para armazenar estados visitados.
+
+Objetivo:
+
+- Evitar repetição de estados
+- Melhorar desempenho
+
+Funcionamento:
+
+- Cada estado é convertido em uma chave (grid)
+- Antes de explorar:
+  - Se já existe → ignora
+  - Senão → insere
+
+Complexidade:
+
+- Inserção: O(log n)
+- Busca: O(log n)
+
+—
+
+## Complexidade
+
+O problema possui crescimento exponencial.
+
+- DFS:
+  - Tempo: O(b^d)
+  - Espaço: O(d)
+
+- BFS:
+  - Tempo: O(b^d)
+  - Espaço: O(b^d)
+
+—
+
+## Notas
+
+- A chave de estados na AVL utiliza o `grid`.
+- “Todas as soluções” pode ser custoso; use com cautela.

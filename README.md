@@ -13,38 +13,31 @@ Aplicação para jogar e resolver o quebra-cabeça dos pentominós utilizando gr
   .\compilar.bat
   ```
 - Os binários são gerados em `build_gui`:
-  - `pentaminos_play.exe` (GUI/Jogar e modos Resolver por linha de comando)
-  - `pentaminos_demo.exe` (GUI com prefill padrão)
+  - `pentaminos_play.exe` (GUI única: Jogar e Resolver)
 
 —
 
 ## Como executar
 
-- Modo interativo (menu):
+- Modo interativo (GUI):
 
   ```bat
   .\build_gui\pentaminos_play.exe 6 10
   ```
 
-  - O programa pedirá o modo: Jogar (GUI), Resolver DFS (uma/todas), BFS, ou Comparar DFS×BFS.
+  - Na GUI, use os botões no painel esquerdo: Solve DFS, Solve BFS, Reset.
   - Tamanhos suportados: qualquer `m×n` com área múltipla de 5 até 60 (ex.: 6×10, 5×12, 4×15, 3×20). O número de peças usadas é `K = área/5`.
 
-- Modos Resolver por flags (sem menu):
-
-  ```bat
-  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs
-  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs --all
-  .\build_gui\pentaminos_play.exe 6 10 --solve=bfs
-  .\build_gui\pentaminos_play.exe 6 10 --compare
-  ```
-
-- Jogar (GUI):
+- Jogar/Resolver (GUI):
   - Peças à esquerda; clique para selecionar.
   - Variações: ↑/↓ (ou W/S).
   - Colocar: clique no tabuleiro.
-  - Desfazer: BACKSPACE; Sair: ESC.
-  - Contador mostra “Colocadas: X/Y” onde `Y = K`.
-  - Opcional: prefill automático (pergunta no menu). Ou use `--prefill`.
+  - Desfazer: BACKSPACE; Reset rápido: tecla R; Sair: ESC.
+  - Botões: Solve DFS, Solve BFS, Reset.
+  - Contador mostra “Colocadas: X/Y”, onde `Y = K` (K = área/5).
+  - Após clicar em Solve, o cálculo ocorre em background (UI não trava) e a solução é animada peça a peça.
+  - Após vencer, aparece uma dica “Pressione R para Reiniciar”.
+  - Opcional: prefill automático com `--prefill` (abre já preenchida).
 
 —
 
@@ -65,7 +58,7 @@ Aplicação para jogar e resolver o quebra-cabeça dos pentominós utilizando gr
 
 ## Arquitetura
 
-- `main.cpp`: GUI (Raylib), menu e orquestração.
+- `main.cpp`: GUI (Raylib), botões e orquestração.
 - `src/piece`: geração de peças e variações (`Piece.cpp/.h`).
 - `src/board`: tabuleiro e operações (`Board.cpp/.h`).
 - `src/state`: estado de busca (`State.cpp/.h`).

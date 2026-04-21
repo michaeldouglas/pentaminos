@@ -15,11 +15,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Compilando versoes: JOGAVEL e DEMO (preenchida)...
+echo Compilando versao unica: GUI com opcoes (resolver/jogar)...
 echo.
 
 REM Finaliza executavel se estiver rodando para evitar erro de link
-taskkill /IM pentaminos.exe /F >nul 2>&1
+taskkill /IM pentaminos_play.exe /F >nul 2>&1
 
 if not exist build_gui mkdir build_gui
 pushd build_gui
@@ -44,20 +44,7 @@ if errorlevel 1 (
     set "raylib=C:\msys64\ucrt64"
 )
 
-REM 2) Compila DEMO (prefill por padrao)
-g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"%raylib%\include" -L"%raylib%\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
-if errorlevel 1 (
-    echo ERRO: falha ao compilar versao DEMO com o mesmo vendor. Tentando alternativo...
-    if "%RAYLIB_VENDOR%"=="MSYS2" (
-        g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"c:\temp\vcpkg\installed\x64-mingw-dynamic\include" -L"c:\temp\vcpkg\installed\x64-mingw-dynamic\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32 & set "RAYLIB_VENDOR=VCPKG" & set "raylib=c:\temp\vcpkg\installed\x64-mingw-dynamic"
-    ) else (
-        g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"C:\msys64\ucrt64\include" -L"C:\msys64\ucrt64\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32 & set "RAYLIB_VENDOR=MSYS2" & set "raylib=C:\msys64\ucrt64"
-    )
-    if errorlevel 1 (
-        echo ERRO: falha ao compilar versao DEMO tambem nos dois vendors.
-        popd & exit /b 1
-    )
-)
+REM (Removido) Compilacao separada DEMO. Agora a GUI unica tem opcoes internas.
 
 popd
 
@@ -73,12 +60,10 @@ if "%RAYLIB_VENDOR%"=="VCPKG" (
     if exist "%raylib%\bin\raylib.dll" copy /Y "%raylib%\bin\raylib.dll" "build_gui\raylib.dll" >nul
 )
 echo Binarios gerados:
-echo   - build_gui\pentaminos_play.exe   ^(jogavel^)
-echo   - build_gui\pentaminos_demo.exe   ^(preenchido automaticamente^)
+echo   - build_gui\pentaminos_play.exe   ^(GUI: jogar e resolver^)
 echo.
 echo Para rodar manualmente:
 echo   build_gui\pentaminos_play.exe 6 10
-echo   build_gui\pentaminos_demo.exe 6 10
 echo.
 echo Observacao: sua organizacao pode bloquear a execucao ^(Device Guard/WDAC^).
 echo Se ocorrer bloqueio, execute apenas em ambiente permitido ou WSLg.

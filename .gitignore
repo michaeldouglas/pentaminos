@@ -38,11 +38,6 @@
 *.out
 *.app
 
-# Build directories and executables
-build/
-build_gui/
-*.exe
-pentaminos.exe
 
 # CMake artefacts
 CMakeCache.txt

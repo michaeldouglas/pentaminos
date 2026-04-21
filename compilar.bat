@@ -28,10 +28,10 @@ set "RAYLIB_VENDOR="
 set "raylib="
 
 REM 1) Compila JOGAVEL (sem prefill)
-g++ -std=c++17 -I..\include -I"C:\msys64\ucrt64\include" -L"C:\msys64\ucrt64\lib" -O2 -o pentaminos_play.exe ..\main.cpp ..\src\Board.cpp ..\src\Piece.cpp ..\src\State.cpp ..\src\GraphSolver.cpp ..\src\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
+g++ -std=c++17 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"C:\msys64\ucrt64\include" -L"C:\msys64\ucrt64\lib" -O2 -o pentaminos_play.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
 if errorlevel 1 (
     echo Nao compilou jogavel com MSYS2, tentando com vcpkg MinGW...
-    g++ -std=c++17 -I..\include -I"c:\temp\vcpkg\installed\x64-mingw-dynamic\include" -L"c:\temp\vcpkg\installed\x64-mingw-dynamic\lib" -O2 -o pentaminos_play.exe ..\main.cpp ..\src\Board.cpp ..\src\Piece.cpp ..\src\State.cpp ..\src\GraphSolver.cpp ..\src\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
+    g++ -std=c++17 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"c:\temp\vcpkg\installed\x64-mingw-dynamic\include" -L"c:\temp\vcpkg\installed\x64-mingw-dynamic\lib" -O2 -o pentaminos_play.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
     if errorlevel 1 (
         echo ERRO: falha ao compilar versao JOGAVEL com MSYS2 e vcpkg.
         popd & exit /b 1
@@ -45,13 +45,13 @@ if errorlevel 1 (
 )
 
 REM 2) Compila DEMO (prefill por padrao)
-g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\include -I"%raylib%\include" -L"%raylib%\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\Board.cpp ..\src\Piece.cpp ..\src\State.cpp ..\src\GraphSolver.cpp ..\src\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
+g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"%raylib%\include" -L"%raylib%\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
 if errorlevel 1 (
     echo ERRO: falha ao compilar versao DEMO com o mesmo vendor. Tentando alternativo...
     if "%RAYLIB_VENDOR%"=="MSYS2" (
-        g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\include -I"c:\temp\vcpkg\installed\x64-mingw-dynamic\include" -L"c:\temp\vcpkg\installed\x64-mingw-dynamic\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\Board.cpp ..\src\Piece.cpp ..\src\State.cpp ..\src\GraphSolver.cpp ..\src\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32 & set "RAYLIB_VENDOR=VCPKG" & set "raylib=c:\temp\vcpkg\installed\x64-mingw-dynamic"
+        g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"c:\temp\vcpkg\installed\x64-mingw-dynamic\include" -L"c:\temp\vcpkg\installed\x64-mingw-dynamic\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32 & set "RAYLIB_VENDOR=VCPKG" & set "raylib=c:\temp\vcpkg\installed\x64-mingw-dynamic"
     ) else (
-        g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\include -I"C:\msys64\ucrt64\include" -L"C:\msys64\ucrt64\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\Board.cpp ..\src\Piece.cpp ..\src\State.cpp ..\src\GraphSolver.cpp ..\src\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32 & set "RAYLIB_VENDOR=MSYS2" & set "raylib=C:\msys64\ucrt64"
+        g++ -std=c++17 -DPREFILL_DEFAULT=1 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"C:\msys64\ucrt64\include" -L"C:\msys64\ucrt64\lib" -O2 -o pentaminos_demo.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32 & set "RAYLIB_VENDOR=MSYS2" & set "raylib=C:\msys64\ucrt64"
     )
     if errorlevel 1 (
         echo ERRO: falha ao compilar versao DEMO tambem nos dois vendors.

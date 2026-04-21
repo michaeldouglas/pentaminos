@@ -72,6 +72,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    cout << "Gerando o jogo..." << endl;
+
     Board board(rows, cols);
     vector<Piece> pieces = generatePentominoes();
     vector<bool> usedPieces(pieces.size(), false);
@@ -89,6 +91,7 @@ int main(int argc, char **argv)
 
     if (doPrefill)
     {
+        cout << "Preenchendo automaticamente, aguarde..." << endl;
         AVLTree vis;
         auto piecesCopy = pieces; // manter ordem original
         bool ok = autoDfs(board, piecesCopy, 0, vis);
@@ -100,6 +103,7 @@ int main(int argc, char **argv)
                 for (int c = 0; c < (int)g[r].size(); ++c)
                     if (g[r][c] > 0 && g[r][c] - 1 < (int)usedPieces.size())
                         usedPieces[g[r][c] - 1] = true;
+            cout << "Pronto!" << endl;
         }
     }
 

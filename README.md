@@ -28,15 +28,6 @@ Aplicação para jogar e resolver o quebra-cabeça dos pentominós utilizando gr
   - Na GUI, use os botões no painel esquerdo: Solve DFS, Solve BFS, Reset.
   - Tamanhos suportados: qualquer `m×n` com área múltipla de 5 até 60 (ex.: 6×10, 5×12, 4×15, 3×20). O número de peças usadas é `K = área/5`.
 
-- Modos Resolver por flags (sem menu, resultado no console e encerra):
-
-  ```bat
-  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs
-  .\build_gui\pentaminos_play.exe 6 10 --solve=dfs --all
-  .\build_gui\pentaminos_play.exe 6 10 --solve=bfs
-  .\build_gui\pentaminos_play.exe 6 10 --compare
-  ```
-
 - Jogar/Resolver (GUI):
   - Peças à esquerda; clique para selecionar.
   - Variações: ↑/↓ (ou W/S).

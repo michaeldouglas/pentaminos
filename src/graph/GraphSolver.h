@@ -14,7 +14,7 @@ private:
     bool isComplete(const std::vector<std::vector<int>> &g) const;
 
 public:
-    GraphSolver(Board b);
+    GraphSolver(Board b, size_t pieceCount = 12);
     // DFS: primeira solucao
     bool solveDFSOne(int &states, long long &ms, State &solution);
     // DFS: todas as solucoes (maxSolutions=0 para ilimitado). Retorna contagem.

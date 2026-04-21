@@ -71,9 +71,11 @@ static size_t dfsAll(Board &board, vector<Piece> &pieces, int idx, AVLTree &vis,
     return found;
 }
 
-GraphSolver::GraphSolver(Board b) : board(b)
+GraphSolver::GraphSolver(Board b, size_t pieceCount) : board(b)
 {
     pieces = generatePentominoes();
+    if (pieceCount < pieces.size())
+        pieces.erase(pieces.begin() + pieceCount, pieces.end());
 }
 
 bool GraphSolver::isComplete(const std::vector<std::vector<int>> &g) const

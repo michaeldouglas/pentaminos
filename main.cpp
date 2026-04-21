@@ -65,15 +65,19 @@ int main(int argc, char **argv)
         cout << "Dimensoes invalidas: use valores positivos.\n";
         return 1;
     }
-    // Validacao forte: sempre usar 12 pecas => tabuleiro com 60 celulas
-    if ((rows * cols) != 60)
+    // Validacao: area multipla de 5 e <= 60 (12 pentaminos). K = area/5
+    int area = rows * cols;
+    if (area % 5 != 0 || area > 60)
     {
-        cout << "Este jogo usa sempre 12 pecas (60 celulas).\n";
-        cout << "Escolha um dos tamanhos: 6x10, 5x12, 4x15, 3x20.\n";
+        cout << "Area invalida. Use multiplos de 5 ate 60 (ex: 6x10, 5x12, 4x15, 3x20).\n";
         return 1;
     }
+    int K = area / 5;
 
     cout << "Gerando o jogo..." << endl;
+    // Se resolver via menu (DFS uma) e quisermos abrir a GUI preenchida
+    vector<vector<int>> solvedGrid;
+    bool solvedForGUI = false;
 
     // Modo Resolver via argumentos: --solve=dfs|bfs [--all]
     if (argc >= 4)
@@ -81,7 +85,7 @@ int main(int argc, char **argv)
         std::string mode = argv[3];
         if (mode == "--solve=dfs" || mode == "--solve=bfs")
         {
-            GraphSolver solver(Board(rows, cols));
+            GraphSolver solver(Board(rows, cols), (size_t)K);
             int states = 0;
             long long ms = 0;
             State sol;
@@ -106,10 +110,111 @@ int main(int argc, char **argv)
             }
             return 0;
         }
+        else if (mode == "--compare")
+        {
+            GraphSolver s1(Board(rows, cols), (size_t)K);
+            GraphSolver s2(Board(rows, cols), (size_t)K);
+            int st;
+            long long t;
+            State so;
+            bool ok1 = s1.solveDFSOne(st = 0, t = 0, so); // we set via call, initializers ignored
+            int states1 = st;
+            long long ms1 = t;
+            bool ok2 = s2.solveBFS(st = 0, t = 0, so);
+            int states2 = st;
+            long long ms2 = t;
+            std::cout << "COMPARE (K=" << K << ")\n";
+            std::cout << "DFS: ok=" << ok1 << ", estados=" << states1 << ", ms=" << ms1 << "\n";
+            std::cout << "BFS: ok=" << ok2 << ", estados=" << states2 << ", ms=" << ms2 << "\n";
+            return 0;
+        }
+    }
+
+    // Menu interativo (quando nenhum modo foi passado por argumento)
+    cout << "\n=== MODO ===\n";
+    cout << "1) Jogar (GUI)\n";
+    cout << "2) Resolver DFS (uma)\n";
+    cout << "3) Resolver DFS (todas)\n";
+    cout << "4) Resolver BFS (minima profundidade)\n";
+    cout << "5) Comparar DFS x BFS\n";
+    cout << "Opcao: ";
+    int escolha = 1;
+    cin >> escolha;
+    if (escolha >= 2 && escolha <= 5)
+    {
+        GraphSolver solver(Board(rows, cols), (size_t)K);
+        int states = 0;
+        long long ms = 0;
+        State sol;
+        if (escolha == 2)
+        {
+            bool ok = solver.solveDFSOne(states, ms, sol);
+            std::cout << "DFS(uma): encontrado=" << (ok ? 1 : 0) << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
+            if (ok)
+            {
+                solvedGrid = sol.grid;
+                solvedForGUI = true;
+                // segue para abrir a GUI com o tabuleiro preenchido
+            }
+            else
+            {
+                return 0; // sem solucao, encerra
+            }
+        }
+        else if (escolha == 3)
+        {
+            size_t count = solver.solveDFSAll(states, ms, 0, false);
+            std::cout << "DFS(todas): solucoes=" << count << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
+            return 0;
+        }
+        else if (escolha == 4)
+        {
+            bool ok = solver.solveBFS(states, ms, sol);
+            std::cout << "BFS: encontrado=" << (ok ? 1 : 0) << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
+            if (ok)
+            {
+                solvedGrid = sol.grid;
+                solvedForGUI = true;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else if (escolha == 5)
+        {
+            GraphSolver s1(Board(rows, cols), (size_t)K);
+            GraphSolver s2(Board(rows, cols), (size_t)K);
+            int st;
+            long long t;
+            State so;
+            bool ok1 = s1.solveDFSOne(st = 0, t = 0, so);
+            int states1 = st;
+            long long ms1 = t;
+            bool ok2 = s2.solveBFS(st = 0, t = 0, so);
+            int states2 = st;
+            long long ms2 = t;
+            std::cout << "COMPARE (K=" << K << ")\n";
+            std::cout << "DFS: ok=" << ok1 << ", estados=" << states1 << ", ms=" << ms1 << "\n";
+            std::cout << "BFS: ok=" << ok2 << ", estados=" << states2 << ", ms=" << ms2 << "\n";
+            return 0;
+        }
+    }
+
+    // Opcional: perguntar prefill para o modo Jogar
+    bool askPrefill = false;
+    if (!solvedForGUI)
+    {
+        cout << "Ativar prefill automatico? (s/n): ";
+        char ans = 'n';
+        cin >> ans;
+        askPrefill = (ans == 's' || ans == 'S');
     }
 
     Board board(rows, cols);
     vector<Piece> pieces = generatePentominoes();
+    if ((int)pieces.size() > K)
+        pieces.erase(pieces.begin() + K, pieces.end());
     vector<bool> usedPieces(pieces.size(), false);
     vector<PlacedPiece> placed;
 
@@ -122,8 +227,22 @@ int main(int argc, char **argv)
 #endif
     if (argc >= 4 && std::string(argv[3]) == "--prefill")
         doPrefill = true;
+    if (argc < 4) // se menu interativo foi usado
+        doPrefill = askPrefill;
+    if (solvedForGUI)
+        doPrefill = false;
 
-    if (doPrefill)
+    if (solvedForGUI)
+    {
+        // Inicializa o tabuleiro com a solucao encontrada e marca pecas usadas
+        board = Board(solvedGrid);
+        auto g = board.getGrid();
+        for (int r = 0; r < (int)g.size(); ++r)
+            for (int c = 0; c < (int)g[r].size(); ++c)
+                if (g[r][c] > 0 && g[r][c] - 1 < (int)usedPieces.size())
+                    usedPieces[g[r][c] - 1] = true;
+    }
+    else if (doPrefill)
     {
         cout << "Preenchendo automaticamente, aguarde..." << endl;
         AVLTree vis;
@@ -323,11 +442,11 @@ int main(int argc, char **argv)
         for (bool u : usedPieces)
             if (u)
                 usedCount++;
-        string info = "Colocadas: " + to_string(usedCount) + "/12";
+        string info = "Colocadas: " + to_string(usedCount) + "/" + to_string((int)pieces.size());
         DrawText(info.c_str(), boardStartX, boardStartY + rows * CELL_SIZE + 55, 12, BLACK);
 
         // Mensagem de vitória
-        if (usedCount == 12)
+        if (usedCount == (int)pieces.size())
         {
             DrawRectangle(0, 0, screenWidth, screenHeight, {0, 0, 0, 180});
             DrawText("PARABENS! VENCEU!",

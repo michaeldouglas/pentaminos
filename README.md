@@ -39,10 +39,12 @@ Como executar
   - Peças à esquerda; clique para selecionar.
   - Variações: ↑/↓ (ou W/S).
   - Colocar: clique no tabuleiro.
-  - Desfazer: BACKSPACE; Sair: ESC.
+  - Desfazer: BACKSPACE; Reset rápido: tecla R; Sair: ESC.
   - Botões: Solve DFS, Solve BFS, Reset.
   - Contador mostra “Colocadas: X/Y”, onde `Y = K` (K = área/5).
-  - Opcional: prefill automático com `--prefill` (pré-resolve ao abrir a GUI vazia).
+  - Após clicar em Solve, o cálculo ocorre em background (UI não trava) e a solução é animada peça a peça.
+  - Após vencer, aparece uma dica “Pressione R para Reiniciar”.
+  - Opcional: prefill automático com `--prefill` (abre já preenchida).
 
 —
 

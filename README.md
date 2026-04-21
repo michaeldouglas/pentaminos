@@ -11,23 +11,22 @@ Como compilar (Windows)
   .\compilar.bat
   ```
 - Os binários são gerados em `build_gui`:
-  - `pentaminos_play.exe` (GUI/Jogar e modos Resolver por linha de comando)
-  - `pentaminos_demo.exe` (GUI com prefill padrão)
+  - `pentaminos_play.exe` (GUI única: Jogar e Resolver)
 
 —
 
 Como executar
 
-- Modo interativo (menu):
+- Modo interativo (GUI):
 
   ```bat
   .\build_gui\pentaminos_play.exe 6 10
   ```
 
-  - O programa pedirá o modo: Jogar (GUI), Resolver DFS (uma/todas), BFS, ou Comparar DFS×BFS.
+  - Na GUI, use os botões no painel esquerdo: Solve DFS, Solve BFS, Reset.
   - Tamanhos suportados: qualquer `m×n` com área múltipla de 5 até 60 (ex.: 6×10, 5×12, 4×15, 3×20). O número de peças usadas é `K = área/5`.
 
-- Modos Resolver por flags (sem menu):
+- Modos Resolver por flags (sem menu, resultado no console e encerra):
 
   ```bat
   .\build_gui\pentaminos_play.exe 6 10 --solve=dfs         # primeira solução (DFS)
@@ -36,13 +35,14 @@ Como executar
   .\build_gui\pentaminos_play.exe 6 10 --compare           # compara DFS×BFS (estados/tempo)
   ```
 
-- Jogar (GUI):
+- Jogar/Resolver (GUI):
   - Peças à esquerda; clique para selecionar.
   - Variações: ↑/↓ (ou W/S).
   - Colocar: clique no tabuleiro.
   - Desfazer: BACKSPACE; Sair: ESC.
-  - Contador mostra “Colocadas: X/Y” onde `Y = K`.
-  - Opcional: prefill automático (pergunta no menu). Ou use `--prefill`.
+  - Botões: Solve DFS, Solve BFS, Reset.
+  - Contador mostra “Colocadas: X/Y”, onde `Y = K` (K = área/5).
+  - Opcional: prefill automático com `--prefill` (pré-resolve ao abrir a GUI vazia).
 
 —
 
@@ -63,7 +63,7 @@ Requisitos
 
 Arquitetura
 
-- `main.cpp`: GUI (Raylib), menu e orquestração.
+- `main.cpp`: GUI (Raylib), botões e orquestração.
 - `src/piece`: geração de peças e variações (`Piece.cpp/.h`).
 - `src/board`: tabuleiro e operações (`Board.cpp/.h`).
 - `src/state`: estado de busca (`State.cpp/.h`).

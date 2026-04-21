@@ -130,87 +130,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // Menu interativo (quando nenhum modo foi passado por argumento)
-    cout << "\n=== MODO ===\n";
-    cout << "1) Jogar (GUI)\n";
-    cout << "2) Resolver DFS (uma)\n";
-    cout << "3) Resolver DFS (todas)\n";
-    cout << "4) Resolver BFS (minima profundidade)\n";
-    cout << "5) Comparar DFS x BFS\n";
-    cout << "Opcao: ";
-    int escolha = 1;
-    cin >> escolha;
-    if (escolha >= 2 && escolha <= 5)
-    {
-        GraphSolver solver(Board(rows, cols), (size_t)K);
-        int states = 0;
-        long long ms = 0;
-        State sol;
-        if (escolha == 2)
-        {
-            bool ok = solver.solveDFSOne(states, ms, sol);
-            std::cout << "DFS(uma): encontrado=" << (ok ? 1 : 0) << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
-            if (ok)
-            {
-                solvedGrid = sol.grid;
-                solvedForGUI = true;
-                // segue para abrir a GUI com o tabuleiro preenchido
-            }
-            else
-            {
-                return 0; // sem solucao, encerra
-            }
-        }
-        else if (escolha == 3)
-        {
-            size_t count = solver.solveDFSAll(states, ms, 0, false);
-            std::cout << "DFS(todas): solucoes=" << count << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
-            return 0;
-        }
-        else if (escolha == 4)
-        {
-            bool ok = solver.solveBFS(states, ms, sol);
-            std::cout << "BFS: encontrado=" << (ok ? 1 : 0) << ", estados=" << states << ", tempo(ms)=" << ms << "\n";
-            if (ok)
-            {
-                solvedGrid = sol.grid;
-                solvedForGUI = true;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-        else if (escolha == 5)
-        {
-            GraphSolver s1(Board(rows, cols), (size_t)K);
-            GraphSolver s2(Board(rows, cols), (size_t)K);
-            int st;
-            long long t;
-            State so;
-            bool ok1 = s1.solveDFSOne(st = 0, t = 0, so);
-            int states1 = st;
-            long long ms1 = t;
-            bool ok2 = s2.solveBFS(st = 0, t = 0, so);
-            int states2 = st;
-            long long ms2 = t;
-            std::cout << "COMPARE (K=" << K << ")\n";
-            std::cout << "DFS: ok=" << ok1 << ", estados=" << states1 << ", ms=" << ms1 << "\n";
-            std::cout << "BFS: ok=" << ok2 << ", estados=" << states2 << ", ms=" << ms2 << "\n";
-            return 0;
-        }
-    }
-
-    // Opcional: perguntar prefill para o modo Jogar
-    bool askPrefill = false;
-    if (!solvedForGUI)
-    {
-        cout << "Ativar prefill automatico? (s/n): ";
-        char ans = 'n';
-        cin >> ans;
-        askPrefill = (ans == 's' || ans == 'S');
-    }
-
     Board board(rows, cols);
     vector<Piece> pieces = generatePentominoes();
     if ((int)pieces.size() > K)
@@ -227,10 +146,7 @@ int main(int argc, char **argv)
 #endif
     if (argc >= 4 && std::string(argv[3]) == "--prefill")
         doPrefill = true;
-    if (argc < 4) // se menu interativo foi usado
-        doPrefill = askPrefill;
-    if (solvedForGUI)
-        doPrefill = false;
+    // Sem prompt interativo; por padrão não faz prefill, a menos que flag seja passada
 
     if (solvedForGUI)
     {
@@ -271,6 +187,7 @@ int main(int argc, char **argv)
 
     int selectedPiece = -1;
     int selectedVariation = 0;
+    std::string statusMsg = "";
 
     while (!WindowShouldClose())
     {
@@ -300,16 +217,81 @@ int main(int argc, char **argv)
             selectedPiece = -1;
         }
 
-        // MOUSE - selecionar peca na lista
+        // MOUSE - selecionar peca na lista ou clicar nos botoes
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             int mouseX = GetMouseX();
             int mouseY = GetMouseY();
 
+            // Botoes de acoes no painel esquerdo (topo)
+            int btnW = UI_WIDTH - 2 * MARGIN;
+            int btnH = 28;
+            Rectangle btnSolveDFS = {(float)MARGIN, (float)MARGIN, (float)btnW, (float)btnH};
+            Rectangle btnSolveBFS = {(float)MARGIN, (float)(MARGIN + btnH + 6), (float)btnW, (float)btnH};
+            Rectangle btnReset = {(float)MARGIN, (float)(MARGIN + 2 * (btnH + 6)), (float)btnW, (float)btnH};
+
+            auto inRect = [](int x, int y, const Rectangle &r)
+            {
+                return x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height;
+            };
+
+            if (inRect(mouseX, mouseY, btnSolveDFS))
+            {
+                GraphSolver solver(Board(rows, cols), (size_t)K);
+                int states = 0;
+                long long ms = 0;
+                State sol;
+                bool ok = solver.solveDFSOne(states, ms, sol);
+                if (ok)
+                {
+                    board = Board(sol.grid);
+                    usedPieces.assign(pieces.size(), false);
+                    auto g = board.getGrid();
+                    for (int r = 0; r < (int)g.size(); ++r)
+                        for (int c = 0; c < (int)g[r].size(); ++c)
+                            if (g[r][c] > 0 && g[r][c] - 1 < (int)usedPieces.size())
+                                usedPieces[g[r][c] - 1] = true;
+                    statusMsg = "DFS ok - estados=" + to_string(states) + ", ms=" + to_string(ms);
+                }
+                else
+                    statusMsg = "DFS sem solucao";
+            }
+            else if (inRect(mouseX, mouseY, btnSolveBFS))
+            {
+                GraphSolver solver(Board(rows, cols), (size_t)K);
+                int states = 0;
+                long long ms = 0;
+                State sol;
+                bool ok = solver.solveBFS(states, ms, sol);
+                if (ok)
+                {
+                    board = Board(sol.grid);
+                    usedPieces.assign(pieces.size(), false);
+                    auto g = board.getGrid();
+                    for (int r = 0; r < (int)g.size(); ++r)
+                        for (int c = 0; c < (int)g[r].size(); ++c)
+                            if (g[r][c] > 0 && g[r][c] - 1 < (int)usedPieces.size())
+                                usedPieces[g[r][c] - 1] = true;
+                    statusMsg = "BFS ok - estados=" + to_string(states) + ", ms=" + to_string(ms);
+                }
+                else
+                    statusMsg = "BFS sem solucao";
+            }
+            else if (inRect(mouseX, mouseY, btnReset))
+            {
+                board = Board(rows, cols);
+                usedPieces.assign(pieces.size(), false);
+                placed.clear();
+                selectedPiece = -1;
+                statusMsg = "Tabuleiro limpo";
+            }
             // Clique na lista de peças (lado esquerdo)
             if (mouseX < UI_WIDTH)
             {
-                int pieceIdx = (mouseY - MARGIN) / (CELL_SIZE + 5);
+                // Ajustar inicio da lista apos botoes
+                int buttonsHeight = (3 * 28) + (2 * 6) + 30; // 3 botoes + espacos + titulo
+                int listStartY = MARGIN + buttonsHeight;
+                int pieceIdx = (mouseY - listStartY) / (CELL_SIZE + 5);
                 if (pieceIdx >= 0 && pieceIdx < (int)pieces.size())
                 {
                     if (!usedPieces[pieceIdx])
@@ -360,13 +342,26 @@ int main(int argc, char **argv)
         BeginDrawing();
         ClearBackground(WHITE);
 
-        // PAINEL ESQUERDO - Lista de peças
+        // PAINEL ESQUERDO - Botoes + Lista de peças
         DrawRectangle(0, 0, UI_WIDTH, screenHeight, LIGHTGRAY);
-        DrawText("Pecas", MARGIN, MARGIN, 20, BLACK);
+        int btnW = UI_WIDTH - 2 * MARGIN;
+        int btnH = 28;
+        int yBtn = MARGIN;
+        DrawRectangle(MARGIN, yBtn, btnW, btnH, DARKGREEN);
+        DrawText("Solve DFS", MARGIN + 8, yBtn + 6, 16, WHITE);
+        yBtn += btnH + 6;
+        DrawRectangle(MARGIN, yBtn, btnW, btnH, DARKBLUE);
+        DrawText("Solve BFS", MARGIN + 8, yBtn + 6, 16, WHITE);
+        yBtn += btnH + 6;
+        DrawRectangle(MARGIN, yBtn, btnW, btnH, MAROON);
+        DrawText("Reset", MARGIN + 8, yBtn + 6, 16, WHITE);
+        yBtn += btnH + 12;
+        DrawText("Pecas", MARGIN, yBtn, 20, BLACK);
 
+        int listStartY = yBtn + 30;
         for (int i = 0; i < (int)pieces.size(); i++)
         {
-            int y = MARGIN + 30 + i * (CELL_SIZE + 5);
+            int y = listStartY + i * (CELL_SIZE + 5);
             Color bgColor = usedPieces[i] ? DARKGRAY : (i == selectedPiece ? YELLOW : WHITE);
             DrawRectangle(MARGIN, y, UI_WIDTH - 2 * MARGIN, CELL_SIZE, bgColor);
             DrawRectangleLines(MARGIN, y, UI_WIDTH - 2 * MARGIN, CELL_SIZE, BLACK);
@@ -453,8 +448,10 @@ int main(int argc, char **argv)
                      screenWidth / 2 - 150, screenHeight / 2 - 30, 40, GREEN);
         }
 
-        // Instruções
-        DrawText("BACKSPACE: desfazer | ESC: sair", MARGIN, screenHeight - 30, 12, DARKGRAY);
+        // Instruções e status
+        DrawText("BACKSPACE: desfazer | ESC: sair", MARGIN, screenHeight - 50, 12, DARKGRAY);
+        if (!statusMsg.empty())
+            DrawText(statusMsg.c_str(), MARGIN, screenHeight - 30, 12, DARKBLUE);
 
         EndDrawing();
     }

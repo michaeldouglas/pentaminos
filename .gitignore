@@ -1,0 +1,57 @@
+# Prerequisites
+*.d
+
+.github/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.out
+*.app
+
+# Build directories and executables
+build/
+build_gui/
+*.exe
+pentaminos.exe
+
+# CMake artefacts
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+compile_commands.json
+
+# vcpkg
+c:/temp/vcpkg/
+
+# debug information files
+*.dwo

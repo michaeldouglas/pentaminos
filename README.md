@@ -2,7 +2,12 @@
 
 Aplicação para jogar e resolver o quebra-cabeça dos pentominós utilizando grafos, DFS, BFS e AVL.
 
-<img src="image.png" alt="Jogo resolvido">
+<h3 align="center">Ilustrado vs Resultado</h3>
+
+<p align="center">
+  <img src="ilustrado.gif" width="45%" />
+  <img src="image.png" width="45%" />
+</p>
 
 —
 

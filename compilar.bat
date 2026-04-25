@@ -26,6 +26,13 @@ pushd build_gui
 
 set "RAYLIB_VENDOR="
 set "raylib="
+set "GXX_PATH="
+set "MINGW_BIN="
+
+for %%I in (g++.exe) do set "GXX_PATH=%%~$PATH:I"
+if defined GXX_PATH (
+    for %%I in ("%GXX_PATH%") do set "MINGW_BIN=%%~dpI"
+)
 
 REM 1) Compila JOGAVEL (sem prefill)
 g++ -std=c++17 -I..\src\avl -I..\src\board -I..\src\graph -I..\src\piece -I..\src\state -I"C:\msys64\ucrt64\include" -L"C:\msys64\ucrt64\lib" -O2 -o pentaminos_play.exe ..\main.cpp ..\src\board\Board.cpp ..\src\piece\Piece.cpp ..\src\state\State.cpp ..\src\graph\GraphSolver.cpp ..\src\avl\AVLTree.cpp -lraylib -lopengl32 -lwinmm -luser32 -lgdi32
@@ -55,12 +62,24 @@ echo =============================================
 echo.
 REM Copia a DLL do raylib para a pasta do executavel, se existir
 if "%RAYLIB_VENDOR%"=="VCPKG" (
-    if exist "%raylib%\bin\raylib.dll" copy /Y "%raylib%\bin\raylib.dll" "build_gui\raylib.dll" >nul
+    if exist "%raylib%\bin\*.dll" copy /Y "%raylib%\bin\*.dll" "build_gui\" >nul
 ) else if "%RAYLIB_VENDOR%"=="MSYS2" (
     if exist "%raylib%\bin\raylib.dll" copy /Y "%raylib%\bin\raylib.dll" "build_gui\raylib.dll" >nul
 )
+
+REM Copia as DLLs do runtime MinGW usadas por builds dinamicos.
+REM Sem elas, o jogo abre no seu PC, mas falha em maquinas sem MinGW/MSYS2.
+if defined MINGW_BIN (
+    if exist "%MINGW_BIN%libstdc++-6.dll" copy /Y "%MINGW_BIN%libstdc++-6.dll" "build_gui\" >nul
+    if exist "%MINGW_BIN%libwinpthread-1.dll" copy /Y "%MINGW_BIN%libwinpthread-1.dll" "build_gui\" >nul
+    if exist "%MINGW_BIN%libgcc_s_seh-1.dll" copy /Y "%MINGW_BIN%libgcc_s_seh-1.dll" "build_gui\" >nul
+    if exist "%MINGW_BIN%libgcc_s_sjlj-1.dll" copy /Y "%MINGW_BIN%libgcc_s_sjlj-1.dll" "build_gui\" >nul
+    if exist "%MINGW_BIN%libgcc_s_dw2-1.dll" copy /Y "%MINGW_BIN%libgcc_s_dw2-1.dll" "build_gui\" >nul
+)
+
 echo Binarios gerados:
 echo   - build_gui\pentaminos_play.exe   ^(GUI: jogar e resolver^)
+echo   - DLLs necessarias copiadas para build_gui\
 echo.
 echo Para rodar manualmente:
 echo   build_gui\pentaminos_play.exe 6 10

@@ -64,7 +64,7 @@ REM Copia a DLL do raylib para a pasta do executavel, se existir
 if "%RAYLIB_VENDOR%"=="VCPKG" (
     if exist "%raylib%\bin\*.dll" copy /Y "%raylib%\bin\*.dll" "build_gui\" >nul
 ) else if "%RAYLIB_VENDOR%"=="MSYS2" (
-    if exist "%raylib%\bin\raylib.dll" copy /Y "%raylib%\bin\raylib.dll" "build_gui\raylib.dll" >nul
+    if exist "%raylib%\bin\*raylib*.dll" copy /Y "%raylib%\bin\*raylib*.dll" "build_gui\" >nul
 )
 
 REM Copia as DLLs do runtime MinGW usadas por builds dinamicos.
